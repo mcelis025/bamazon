@@ -88,8 +88,17 @@ function questionTwo() {
             }
         ])
         .then(answers => {
-            // if there are items then --  
-            if (input) {
+            var numChosen = parseInt(answers.q2);
+            if (numChosen > productChosen.stock_quantity) {
+                console.log("Insufficient quantity!");
+            }
+            else {
+                connection.query("UPDATE products SET stock_quantity = stock_quantity - ? WHERE item_id = ?", [quantity, product.item_id], function (err, res) {
+                    if (err) throw err;
+                    console.log("\nSuccessfully purchased " + quantity + " " + product.product_name + "'s!");
+                    loadProducts();
+                }
+                );
 
             }
         })
