@@ -50,30 +50,31 @@ function initialQuestion() {
         .then(answers => {
             var productChosen = parseInt(answers.questionOne);
 
-            connection.query('SELECT * FROM products WHERE item_id = ?', [productChosen], function (err, res) {
-                if (err) throw err;
-                for (let i = 0; i < res.length; i++) {
-                    const match = res[i];
+            connection.query('SELECT * FROM products WHERE item_id = ?',
+                [productChosen], function (err, results) {
+                    if (err) throw err;
+                    for (let i = 0; i < results.length; i++) {
+                        const match = results[i];
 
-                    if (productChosen === match.item_id) {
-                        var itemID = "ITEM ID: " + match.item_id;
-                        var productName = "\nProduct: " + match.product_name;
-                        var DepartmentName = "\nDepartment: " + match.department_name;
-                        var price = "\nPrice: $" + match.price;
-                        var stockQty = "\nQty: " + match.stock_quantity + "\n";
-                        console.log("\nYou chose to purchase:\n\n" + [itemID, productName, DepartmentName, price, stockQty].join(" "));
-                        questionTwo();
-                    }
-                    else {
-                        console.log("\nID entered not valid. Please chose valid ID.");
-                        initialQuestion();
+                        if (productChosen === match.item_id) {
+                            var itemID = "ITEM ID: " + match.item_id;
+                            var productName = "\nProduct: " + match.product_name;
+                            var DepartmentName = "\nDepartment: " + match.department_name;
+                            var price = "\nPrice: $" + match.price;
+                            var stockQty = "\nQty: " + match.stock_quantity + "\n";
+                            console.log("\nYou chose to purchase:\n\n" + [itemID, productName, DepartmentName, price, stockQty].join(" "));
+                            questionTwo(productChosen);
+                        }
+                        else {
+                            console.log("\nID entered not valid. Please chose valid ID.");
+                            initialQuestion();
+                        };
                     };
-                };
-            });
+                });
         });
 };
 
-function questionTwo() {
+function questionTwo(productChosen) {
     inquirer
         .prompt([
             {
@@ -89,29 +90,37 @@ function questionTwo() {
         ])
         .then(answers => {
             var numChosen = parseInt(answers.q2);
-            if (numChosen > productChosen.stock_quantity) {
-                console.log("Insufficient quantity!");
-            }
-            else {
-                connection.query("UPDATE products SET stock_quantity = stock_quantity - ? WHERE item_id = ?", [quantity, product.item_id], function (err, res) {
-                    if (err) throw err;
-                    console.log("\nSuccessfully purchased " + quantity + " " + product.product_name + "'s!");
-                    loadProducts();
-                }
-                );
 
-            }
-        })
-        .catch(error => {
-            if (error.isTtyError) {
-                // Prompt couldn't be rendered in the current environment
-                console.log(error);
-            } else {
-                // Something else when wrong
-            }
+            //for (let i = 0; i < results.length; i++) {
+
+                if (numChosen > productChosen.stockQty) {
+                    console.log("Insufficient quantity!");
+                }
+                else {
+                    connection.query("UPDATE products SET stock_quantity = stock_quantity - ? WHERE item_id = ?",
+                        [numChosen, productChosen.item_id], function (err, res) {
+                            if (err) throw err;
+                            var total = productChosen.price * numChosen;
+                            console.log(
+                                "\nPurchased " +
+                                productChosen.quantity + " " +
+                                productChosen.product_name +
+                                "'s! For a total of " +
+                                total);
+                            endConnection();
+                        }
+                    );
+              //  };
+            };
         });
 };
 
-function endConnection() {
-    connection.end();
+function endConnection(stop) {
+    console.log("\nKeep Shopping? Press 's' to stop. Press any other key to continue.");
+
+    if (stop.toLowerCase() === "s") {
+        console.log("\nThanks!");
+        connection.end();
+        process.exit(0);
+    }
 };
