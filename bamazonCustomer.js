@@ -9,9 +9,11 @@ var connection = mysql.createConnection({
     database: "bamazon"
 });
 
-connection.connect();
+connection.connect(function (error) {
+    if (error) throw error;
+    showStock();
+});
 
-showStock();
 
 function showStock() {
     connection.query('SELECT * FROM products', function (error, results) {
@@ -27,11 +29,9 @@ function showStock() {
             var stockQty = "\nQty: " + match.stock_quantity + "\n";
             console.log([itemID, productName, DepartmentName, price, stockQty].join(" "));
         };
-
         initialQuestion();
     });
 };
-
 
 function initialQuestion() {
     inquirer
@@ -39,14 +39,51 @@ function initialQuestion() {
             {
                 type: "input",
                 name: "questionOne",
-                message: "Enter the ID of the item you would like to purchase."
+                message: "Enter the ID of the item you would like to purchase.",
+                /* validate: function (val) {
+                    return !isNaN(val) || val.toLowerCase() === "q";
+                } */
             }
         ])
         .then(answers => {
-            if (questionOne === match.item_id && stockQty >= 1) {
-                questionTwo();
+            // checkIfShouldExit(val.choice);
+            var productChosen = parseInt(answers.questionOne);
+            console.log(productChosen);
+
+            connection.query('SELECT * FROM products WHERE item_id = "productChosen"', function (err, res) {
+                if (err) throw err;
+                for (let i = 0; i < res.length; i++) {
+                    console.log(res[i]);
+                }
+            });
+
+            /*             var item = available(productChosen, inventory);
+                        console.log(productChosen);
+                        if (productChosen) {
+                            questionTwo(productChosen);
+                        }
+                        else {
+                            // else there are no more of that item
+                            console.log("\nID entered not valid. Please chose valid ID.");
+                        } */
+
+        });
+};
+
+/* function questionTwo() {
+    inquirer
+        .prompt([
+            {
+                type: "input",
+                name: "q2",
+                message: "How many items would you like to purchase?"
             }
-            // else there are no more of that item
+        ])
+        .then(answers => {
+            // if there are items then --  
+            if (input) {
+
+            }
         })
         .catch(error => {
             if (error.isTtyError) {
@@ -58,30 +95,19 @@ function initialQuestion() {
         });
 };
 
-function questionTwo() {
-    inquirer
-      .prompt([
-        {
-          type: "input",
-          name: "q2",
-          message: "How many items would you like to purchase?"
+function validateQ1(input) {
+    return input !== '';
+};
+
+function available(productChosen, inventory) {
+    for (var i = 0; i < inventory.length; i++) {
+        if (inventory[i].item_id === productChosen) {
+            return inventory[i];
         }
-      ])
-      .then(answers => {
-        // if there are items then --  
-/*         if (){
+    }
+    return null;
+}; */
 
-        } */
-      })
-      .catch(error => {
-        if (error.isTtyError) {
-                  // Prompt couldn't be rendered in the current environment
-          console.log(error);
-        } else {
-                  // Something else when wrong
-        }
-      });
-  };
-
-
-connection.end();
+function endConnection() {
+    connection.end();
+};
