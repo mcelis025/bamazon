@@ -40,43 +40,51 @@ function initialQuestion() {
                 type: "input",
                 name: "questionOne",
                 message: "Enter the ID of the item you would like to purchase.",
-                /* validate: function (val) {
-                    return !isNaN(val) || val.toLowerCase() === "q";
-                } */
+                validate:
+                    function validateID(idNum) {
+                        var num = /^\d+$/;
+                        return num.test(idNum) || "ID should be a number!";
+                    }
             }
         ])
         .then(answers => {
-            // checkIfShouldExit(val.choice);
             var productChosen = parseInt(answers.questionOne);
-            console.log(productChosen);
 
-            connection.query('SELECT * FROM products WHERE item_id = "productChosen"', function (err, res) {
+            connection.query('SELECT * FROM products WHERE item_id = ?', [productChosen], function (err, res) {
                 if (err) throw err;
                 for (let i = 0; i < res.length; i++) {
-                    console.log(res[i]);
-                }
+                    const match = res[i];
+
+                    if (productChosen === match.item_id) {
+                        var itemID = "ITEM ID: " + match.item_id;
+                        var productName = "\nProduct: " + match.product_name;
+                        var DepartmentName = "\nDepartment: " + match.department_name;
+                        var price = "\nPrice: $" + match.price;
+                        var stockQty = "\nQty: " + match.stock_quantity + "\n";
+                        console.log("\nYou chose to purchase:\n\n" + [itemID, productName, DepartmentName, price, stockQty].join(" "));
+                        questionTwo();
+                    }
+                    else {
+                        console.log("\nID entered not valid. Please chose valid ID.");
+                        initialQuestion();
+                    };
+                };
             });
-
-            /*             var item = available(productChosen, inventory);
-                        console.log(productChosen);
-                        if (productChosen) {
-                            questionTwo(productChosen);
-                        }
-                        else {
-                            // else there are no more of that item
-                            console.log("\nID entered not valid. Please chose valid ID.");
-                        } */
-
         });
 };
 
-/* function questionTwo() {
+function questionTwo() {
     inquirer
         .prompt([
             {
                 type: "input",
                 name: "q2",
-                message: "How many items would you like to purchase?"
+                message: "How many items would you like to purchase?",
+                validate:
+                    function validateID(idNum) {
+                        var num = /^\d+$/;
+                        return num.test(idNum) || "ID should be a number!";
+                    }
             }
         ])
         .then(answers => {
@@ -94,19 +102,6 @@ function initialQuestion() {
             }
         });
 };
-
-function validateQ1(input) {
-    return input !== '';
-};
-
-function available(productChosen, inventory) {
-    for (var i = 0; i < inventory.length; i++) {
-        if (inventory[i].item_id === productChosen) {
-            return inventory[i];
-        }
-    }
-    return null;
-}; */
 
 function endConnection() {
     connection.end();
